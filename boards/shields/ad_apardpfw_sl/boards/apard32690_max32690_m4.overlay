@@ -1,0 +1,19 @@
+/*
+ * Copyright (c) 2026 Analog Devices, Inc.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&spi3 {
+    adin1110@0 {
+        status = "disabled";
+
+        mdio {
+            status = "disabled";
+
+            ethernet-phy@1 {
+                status = "disabled";
+            };
+        };
+    };
+};
