@@ -1,0 +1,6 @@
+shield:
+  name: eval_cn0391_ardz
+  full_name: 4-Channel Theromocouple Shield
+  vendor: adi
+  supported_features:
+    - adc

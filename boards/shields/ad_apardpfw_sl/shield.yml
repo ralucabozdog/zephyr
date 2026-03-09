@@ -1,0 +1,6 @@
+shield:
+  name: ad_apardpfw_sl
+  full_name: 2-port 10BASE-T1L Arduino Shield with SPoE Power Forwarding
+  vendor: adi
+  supported_features:
+    - ethernet
