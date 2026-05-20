@@ -16,6 +16,7 @@
 / {
 	chosen {
 		silabs,sleeptimer = &rtcc0;
+		zephyr,crc = &gpcrc;
 		zephyr,entropy = &trng;
 		zephyr,flash-controller = &msc;
 	};
@@ -263,6 +264,7 @@
 		msc: flash-controller@50030000 {
 			compatible = "silabs,series2-flash-controller";
 			reg = <0x50030000 0x4000>;
+			ranges;
 			#address-cells = <1>;
 			#size-cells = <1>;
 			clocks = <&cmu CLOCK_MSC CLOCK_BRANCH_HCLK>;
@@ -271,6 +273,8 @@
 
 			flash0: flash@8000000 {
 				compatible = "soc-nv-flash";
+				#address-cells = <1>;
+				#size-cells = <1>;
 				erase-block-size = <8192>;
 				write-block-size = <4>;
 			};
@@ -505,6 +509,13 @@
 			reg = <0x50080000 0x80>;
 			clocks = <&cmu CLOCK_BURAM CLOCK_BRANCH_INVALID>;
 			status = "disabled";
+		};
+
+		gpcrc: gpcrc@50088000 {
+			compatible = "silabs,gpcrc";
+			reg = <0x50088000 0x4000>;
+			clocks = <&cmu CLOCK_GPCRC0 CLOCK_BRANCH_PCLK>;
+			status = "okay";
 		};
 
 		dcdc: dcdc@50094000 {

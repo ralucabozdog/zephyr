@@ -1,5 +1,5 @@
-# Copyright (c) 2025 Infineon Technologies AG,
-# or an affiliate of Infineon Technologies AG.
+# SPDX-FileCopyrightText: <text>Copyright (c) 2026 Infineon Technologies AG,
+# or an affiliate of Infineon Technologies AG. All rights reserved.</text>
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -17,18 +17,19 @@ if(CONFIG_CPU_CORTEX_M33 AND CONFIG_TRUSTED_EXECUTION_SECURE)
   set(signed_hex ${ZEPHYR_BINARY_DIR}/${KERNEL_NAME}.signed.hex)
 
   pse84_add_metadata_secure_hex(${unsigned_hex} ${signed_hex})
-else()
-  zephyr_sources_ifdef(CONFIG_CPU_CORTEX_M55 soc_pse84_m55.c)
+elseif(CONFIG_CPU_CORTEX_M33)
+  zephyr_sources(soc_pse84_m33_ns.c)
+elseif(CONFIG_CPU_CORTEX_M55)
+  zephyr_sources(soc_pse84_m55.c)
 endif()
 
 zephyr_include_directories(security_config)
 zephyr_sources(security_config/pse84_boot.c)
 
-if(CONFIG_CPU_HAS_CUSTOM_FIXED_SOC_MPU_REGIONS)
-  zephyr_sources_ifdef(CONFIG_CPU_CORTEX_M55 mpu_regions.c)
-endif()
+zephyr_sources(mpu_regions.c)
 
 zephyr_sources_ifdef(CONFIG_PM power.c)
+zephyr_sources_ifdef(CONFIG_REBOOT reboot.c)
 
 zephyr_include_directories(.)
 
@@ -39,11 +40,14 @@ endif()
 # Add sections
 if(CONFIG_CPU_CORTEX_M33)
   zephyr_linker_sources(SECTIONS shared_mem_sec.ld)
-  set(SOC_LINKER_SCRIPT ${ZEPHYR_BASE}/include/zephyr/arch/arm/cortex_m/scripts/linker.ld CACHE INTERNAL "")
 else()
   zephyr_linker_sources(SECTIONS shared_mem.ld)
-  set(SOC_LINKER_SCRIPT ${ZEPHYR_BASE}/soc/infineon/edge/pse84/linker_exclude_syslib.ld CACHE INTERNAL "")
 endif()
+
+set(SOC_LINKER_SCRIPT ${ZEPHYR_BASE}/soc/infineon/edge/pse84/linker_exclude_syslib.ld CACHE INTERNAL "")
 
 zephyr_linker_sources_ifdef(CONFIG_CPU_CORTEX_M33 RWDATA rwdata.ld)
 zephyr_linker_sources_ifdef(CONFIG_CPU_CORTEX_M55 RWDATA rwdata.ld)
+
+zephyr_linker_sources_ifdef(CONFIG_CPU_CORTEX_M55 ITCM_SECTION itcm_mem.ld)
+zephyr_linker_sources_ifdef(CONFIG_CPU_CORTEX_M33 RAMFUNC_SECTION ramfunc_mem.ld)

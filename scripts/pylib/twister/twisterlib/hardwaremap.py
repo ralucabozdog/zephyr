@@ -6,6 +6,7 @@
 # pylint: disable=unexpected-keyword-arg
 from __future__ import annotations
 
+import argparse
 import logging
 import os
 import platform
@@ -17,7 +18,7 @@ from pathlib import Path
 import scl
 import yaml
 from natsort import natsorted
-from twisterlib.constants import ZEPHYR_BASE
+from twisterlib import ZEPHYR_BASE
 from twisterlib.hardwaredata import HardwareData
 
 try:
@@ -135,9 +136,9 @@ class HardwareMap:
         ]
     }
 
-    def __init__(self, env=None):
+    def __init__(self, options: argparse.Namespace):
         self.duts: list[DUT] = []
-        self.options = env.options
+        self.options = options
 
     def discover(self):
 

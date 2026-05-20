@@ -986,7 +986,7 @@ struct _static_thread_data {
  *
  * @param name Name of the thread.
  * @param stack_size Stack size in bytes.
- * @param entry Thread entry function.
+ * @param entry Thread entry function, see @ref k_thread_entry_t.
  * @param p1 1st entry point parameter.
  * @param p2 2nd entry point parameter.
  * @param p3 3rd entry point parameter.
@@ -1031,7 +1031,7 @@ struct _static_thread_data {
  *
  * @param name Name of the thread.
  * @param stack_size Stack size in bytes.
- * @param entry Thread entry function.
+ * @param entry Thread entry function, see @ref k_thread_entry_t.
  * @param p1 1st entry point parameter.
  * @param p2 2nd entry point parameter.
  * @param p3 3rd entry point parameter.
@@ -4788,6 +4788,7 @@ struct k_work_q {
 	struct _timeout work_timeout_record;
 	struct k_work *work;
 	k_timeout_t work_timeout;
+	bool finished;
 #endif /* defined(CONFIG_WORKQUEUE_WORK_TIMEOUT) */
 /**
  * INTERNAL_HIDDEN @endcond
@@ -5897,6 +5898,30 @@ struct k_mem_slab {
 				  slab_num_blocks, slab_align)
 
 /**
+ * @brief Statically define and initialize a memory slab for blocks of a given type in a public
+ * (non-static) scope.
+ *
+ * The memory slab's buffer contains @a slab_num_blocks memory blocks
+ * that are the size of @a type. The buffer is aligned according to the
+ * alignment requirement of @a type.
+ *
+ * The memory slab can be accessed outside the module where it is defined
+ * using:
+ *
+ * @code extern struct k_mem_slab <name>; @endcode
+ *
+ * @note This macro cannot be used together with a static keyword.
+ *       If such a use-case is desired, use @ref K_MEM_SLAB_DEFINE_STATIC_TYPE
+ *       instead.
+ *
+ * @param name Name of the memory slab.
+ * @param type Type of each memory block.
+ * @param slab_num_blocks Number of memory blocks.
+ */
+#define K_MEM_SLAB_DEFINE_TYPE(name, type, slab_num_blocks)                                        \
+	K_MEM_SLAB_DEFINE(name, sizeof(type), slab_num_blocks, __alignof(type))
+
+/**
  * @brief Statically define and initialize a memory slab in a user-provided memory section with
  * private (static) scope.
  *
@@ -5940,6 +5965,21 @@ struct k_mem_slab {
 #define K_MEM_SLAB_DEFINE_STATIC(name, slab_block_size, slab_num_blocks, slab_align)               \
 	K_MEM_SLAB_DEFINE_IN_SECT_STATIC(name, __noinit_named(k_mem_slab_buf_##name),              \
 					 slab_block_size, slab_num_blocks, slab_align)
+
+/**
+ * @brief Statically define and initialize a memory slab for blocks of a given type in a private
+ * (static) scope.
+ *
+ * The memory slab's buffer contains @a slab_num_blocks memory blocks
+ * that are the size of @a type. The buffer is aligned according to the
+ * alignment requirement of @a type.
+ *
+ * @param name Name of the memory slab.
+ * @param type Type of each memory block.
+ * @param slab_num_blocks Number of memory blocks.
+ */
+#define K_MEM_SLAB_DEFINE_STATIC_TYPE(name, type, slab_num_blocks)                                 \
+	K_MEM_SLAB_DEFINE_STATIC(name, sizeof(type), slab_num_blocks, __alignof(type))
 
 /**
  * @brief Initialize a memory slab.

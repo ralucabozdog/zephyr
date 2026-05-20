@@ -31,12 +31,12 @@
 #include <zephyr/zsr.h>
 #endif
 
-#if CONFIG_SOC_SERIES_ESP32C6
+#if CONFIG_SOC_SERIES_ESP32C5 || CONFIG_SOC_SERIES_ESP32C6
 #include <soc/hp_apm_reg.h>
 #include <soc/lp_apm_reg.h>
 #include <soc/lp_apm0_reg.h>
 #include <soc/pcr_reg.h>
-#endif /* CONFIG_SOC_SERIES_ESP32C6 */
+#endif
 
 #include <esp_flash_internal.h>
 #include <bootloader_flash.h>
@@ -89,10 +89,10 @@
 #if DT_NODE_EXISTS(DT_CHOSEN(zephyr_code_partition))
 #define PART_OFFSET DT_REG_ADDR(DT_CHOSEN(zephyr_code_partition))
 #else
-#define PART_OFFSET FIXED_PARTITION_OFFSET(slot0_partition)
+#define PART_OFFSET PARTITION_OFFSET(slot0_partition)
 #endif
 #else
-#define PART_OFFSET FIXED_PARTITION_OFFSET(slot0_appcpu_partition)
+#define PART_OFFSET PARTITION_OFFSET(slot0_appcpu_partition)
 #endif
 
 void __start(void);
@@ -127,14 +127,14 @@ void map_rom_segments(int core, struct rom_segments *map)
 	/* Traverse segments to fix flash offset changes due to post-build processing */
 #ifndef CONFIG_BOOTLOADER_MCUBOOT
 	esp_image_segment_header_t WORD_ALIGNED_ATTR segment_hdr;
-	size_t offset = FIXED_PARTITION_OFFSET(boot_partition);
+	size_t offset = PARTITION_OFFSET(boot_partition);
 	bool checksum = false;
 	unsigned int segments = 0;
 	unsigned int ram_segments = 0;
 
 	offset += sizeof(esp_image_header_t);
 
-	while (segments++ < 16) {
+	while (segments++ < ESP_IMAGE_MAX_SEGMENTS) {
 
 		if (esp_rom_flash_read(offset, &segment_hdr,
 					      sizeof(esp_image_segment_header_t), true) != 0) {
@@ -142,21 +142,27 @@ void map_rom_segments(int core, struct rom_segments *map)
 			abort();
 		}
 
-		if (IS_LAST(segment_hdr)) {
-			/* Total segment count = (segments - 1) */
+		if (IS_LAST(segment_hdr) || (segment_hdr.data_len & 3) != 0 ||
+		    segment_hdr.data_len > (SOC_DROM_HIGH - SOC_DROM_LOW)) {
+			/* End of valid segments: either the marker or garbage past
+			 * the legitimate image (e.g. residue from a previously
+			 * flashed larger image when flash wasn't erased). The DROM
+			 * mapping window bounds the largest possible legitimate
+			 * segment.
+			 */
 			break;
 		}
 
 		if (segment_hdr.load_addr) {
 			ESP_EARLY_LOGI(TAG, "%s\t: lma=%08xh vma=%08xh size=%05xh (%6d)",
-				       IS_LAST(segment_hdr)       ? "---"
-				       : IS_DRAM(segment_hdr)     ? "DRAM"
+				       IS_DRAM(segment_hdr)       ? "DRAM"
 				       : IS_IRAM(segment_hdr)     ? "IRAM"
 				       : IS_IROM(segment_hdr)     ? "IROM"
 				       : IS_DROM(segment_hdr)     ? "DROM"
 				       : IS_RTC_IRAM(segment_hdr) ? "RTC_IRAM"
 				       : IS_RTC_DRAM(segment_hdr) ? "RTC_DRAM"
-				       : IS_RTC_DATA(segment_hdr) ? "RTC_DATA" : "???",
+				       : IS_RTC_DATA(segment_hdr) ? "RTC_DATA"
+								  : "???",
 				       offset + sizeof(esp_image_segment_header_t),
 				       segment_hdr.load_addr, segment_hdr.data_len,
 				       segment_hdr.data_len);
@@ -184,7 +190,7 @@ void map_rom_segments(int core, struct rom_segments *map)
 			checksum = true;
 		}
 	}
-	if (segments == 0 || segments == 16) {
+	if (segments == 0 || segments > ESP_IMAGE_MAX_SEGMENTS) {
 		ESP_EARLY_LOGE(TAG, "Error parsing segments");
 		abort();
 	}
@@ -286,6 +292,14 @@ void __start(void)
 	__asm__ __volatile__("la t0, _vector_table\n"
 			     "csrw mtvec, t0\n");
 
+#if SOC_INT_CLIC_SUPPORTED
+	/* CLIC: mtvt points to the hardware-vectored interrupt table.
+	 * mtvec mode bits are hardwired to 3 (CLIC) on ESP32-C5.
+	 */
+	__asm__ __volatile__("la t0, _mtvt_table\n"
+			     "csrw 0x307, t0\n"); /* mtvt CSR */
+#endif
+
 	/* Configure the global pointer register
 	 * (This should be the first thing startup does, as any other piece of code could be
 	 * relaxed by the linker to access something relative to __global_pointer$)
@@ -327,16 +341,17 @@ void __start(void)
 	}
 #endif
 
+	soc_random_enable();
+
 #if defined(CONFIG_ESP_SIMPLE_BOOT) || defined(CONFIG_BOOTLOADER_MCUBOOT)
 	map_rom_segments(0, &map);
-
-	/* Disable RNG entropy source as it was already used */
-	soc_random_disable();
 
 	/* Disable glitch detection as it can be falsely triggered by EMI interference */
 	ana_clock_glitch_reset_config(false);
 
 	ESP_EARLY_LOGI(TAG, "libc heap size %d kB.", libc_heap_size / 1024);
+
+	soc_random_disable();
 
 	__esp_platform_app_start();
 #endif /* CONFIG_ESP_SIMPLE_BOOT || CONFIG_BOOTLOADER_MCUBOOT */

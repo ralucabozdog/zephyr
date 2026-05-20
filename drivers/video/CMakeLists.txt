@@ -7,6 +7,7 @@ zephyr_library_sources(video_ctrls.c)
 zephyr_library_sources(video_device.c)
 
 # zephyr-keep-sorted-start
+zephyr_library_sources_ifdef(CONFIG_VIDEO_ARDUCAM_MEGA video_arducam_mega.c)
 zephyr_library_sources_ifdef(CONFIG_VIDEO_EMUL_IMAGER video_emul_imager.c)
 zephyr_library_sources_ifdef(CONFIG_VIDEO_EMUL_RX video_emul_rx.c)
 zephyr_library_sources_ifdef(CONFIG_VIDEO_ESP32 video_esp32_dvp.c)
@@ -34,5 +35,33 @@ zephyr_library_sources_ifdef(CONFIG_VIDEO_STM32_VENC video_stm32_venc.c)
 zephyr_library_sources_ifdef(CONFIG_VIDEO_ST_MIPID02 video_st_mipid02.c)
 zephyr_library_sources_ifdef(CONFIG_VIDEO_SW_GENERATOR video_sw_generator.c)
 # zephyr-keep-sorted-stop
+
+if(CONFIG_VIDEO_SW_GENERATOR)
+    set(VIDEO_DIR ${CMAKE_CURRENT_LIST_DIR})
+
+    generate_inc_file_for_target(
+        ${ZEPHYR_CURRENT_LIBRARY}
+        ${VIDEO_DIR}/video_sw_generator_input/${CONFIG_VIDEO_SW_GENERATOR_JPEG_NAME}.jpg
+        ${ZEPHYR_BINARY_DIR}/include/generated/jpeg_frame_buffer.inc
+    )
+
+    generate_inc_file_for_target(
+        ${ZEPHYR_CURRENT_LIBRARY}
+        ${VIDEO_DIR}/video_sw_generator_input/${CONFIG_VIDEO_SW_GENERATOR_JPEG_HFLIP_NAME}.jpg
+        ${ZEPHYR_BINARY_DIR}/include/generated/jpeg_frame_buffer_hflip.inc
+    )
+
+    generate_inc_file_for_target(
+        ${ZEPHYR_CURRENT_LIBRARY}
+        ${VIDEO_DIR}/video_sw_generator_input/${CONFIG_VIDEO_SW_GENERATOR_PNG_NAME}.png
+        ${ZEPHYR_BINARY_DIR}/include/generated/png_frame_buffer.inc
+    )
+
+    generate_inc_file_for_target(
+        ${ZEPHYR_CURRENT_LIBRARY}
+        ${VIDEO_DIR}/video_sw_generator_input/${CONFIG_VIDEO_SW_GENERATOR_PNG_HFLIP_NAME}.png
+        ${ZEPHYR_BINARY_DIR}/include/generated/png_frame_buffer_hflip.inc
+    )
+endif()
 
 zephyr_linker_sources(DATA_SECTIONS video.ld)

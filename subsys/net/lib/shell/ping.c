@@ -17,6 +17,8 @@ LOG_MODULE_DECLARE(net_shell);
 
 #include "../ip/icmpv6.h"
 #include "../ip/icmpv4.h"
+#include "../ip/route_ipv6.h"
+#include "../ip/route_ipv4.h"
 #include "../ip/route.h"
 
 #if defined(CONFIG_NET_IP)
@@ -70,7 +72,9 @@ static enum net_verdict handle_ipv6_echo_reply(struct net_icmp_ctx *ctx,
 		return NET_CONTINUE;
 	}
 
-	net_pkt_skip(pkt, sizeof(*icmp_echo));
+	if (net_pkt_skip(pkt, sizeof(*icmp_echo)) < 0) {
+		return NET_DROP;
+	}
 
 	if (net_pkt_remaining_data(pkt) >= sizeof(uint32_t)) {
 		if (net_pkt_read_be32(pkt, &cycles)) {
@@ -155,8 +159,9 @@ static enum net_verdict handle_ipv4_echo_reply(struct net_icmp_ctx *ctx,
 		return NET_CONTINUE;
 	}
 
-
-	net_pkt_skip(pkt, sizeof(*icmp_echo));
+	if (net_pkt_skip(pkt, sizeof(*icmp_echo)) < 0) {
+		return NET_DROP;
+	}
 
 	if (net_pkt_remaining_data(pkt) >= sizeof(uint32_t)) {
 		if (net_pkt_read_be32(pkt, &cycles)) {
@@ -322,10 +327,22 @@ static struct net_if *ping_select_iface(int id, struct net_sockaddr *target)
 	}
 
 	if (IS_ENABLED(CONFIG_NET_IPV4) && target->sa_family == NET_AF_INET) {
+#if defined(CONFIG_NET_IPV4_ROUTE)
+		struct net_route_entry *route;
+#endif
+
 		iface = net_if_ipv4_select_src_iface(&net_sin(target)->sin_addr);
 		if (iface != NULL) {
 			goto out;
 		}
+
+#if defined(CONFIG_NET_IPV4_ROUTE)
+		route = net_route_ipv4_lookup(NULL, &net_sin(target)->sin_addr);
+		if (route) {
+			iface = route->iface;
+			goto out;
+		}
+#endif
 
 		iface = net_if_get_default();
 		goto out;
@@ -333,7 +350,7 @@ static struct net_if *ping_select_iface(int id, struct net_sockaddr *target)
 
 	if (IS_ENABLED(CONFIG_NET_IPV6) && target->sa_family == NET_AF_INET6) {
 		struct net_nbr *nbr;
-#if defined(CONFIG_NET_ROUTE)
+#if defined(CONFIG_NET_IPV6_ROUTE)
 		struct net_route_entry *route;
 #endif
 
@@ -348,8 +365,8 @@ static struct net_if *ping_select_iface(int id, struct net_sockaddr *target)
 			goto out;
 		}
 
-#if defined(CONFIG_NET_ROUTE)
-		route = net_route_lookup(NULL, &net_sin6(target)->sin6_addr);
+#if defined(CONFIG_NET_IPV6_ROUTE)
+		route = net_route_ipv6_lookup(NULL, &net_sin6(target)->sin6_addr);
 		if (route) {
 			iface = route->iface;
 			goto out;

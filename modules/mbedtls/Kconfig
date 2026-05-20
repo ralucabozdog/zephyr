@@ -14,6 +14,12 @@ config MBEDTLS_PROMPTLESS
 	  mbed TLS menu prompt and instead handle the selection of MBEDTLS from
 	  dependent sub-configurations and thus prevent stuck symbol behavior.
 
+config MBEDTLS_VERSION_4_x
+	bool
+	default y
+	help
+	  Hidden Kconfig symbol used internally to mark support for Mbed TLS 4.x.
+
 rsource "Kconfig.psa.auto"
 rsource "Kconfig.psa.logic"
 
@@ -29,32 +35,21 @@ choice MBEDTLS_IMPLEMENTATION
 	default MBEDTLS_BUILTIN
 
 config MBEDTLS_BUILTIN
-	bool "Use Zephyr in-tree mbedTLS version"
+	bool "Zephyr in-tree mbedTLS version"
 	help
 	  Link with mbedTLS sources included with Zephyr distribution.
 	  Included mbedTLS version is well integrated with and supported
 	  by Zephyr, and the recommended choice for most users.
 
-config MBEDTLS_LIBRARY
-	bool "Use external mbedTLS library"
+config MBEDTLS_CUSTOM
+	bool "Custom mbedTLS library"
 	help
-	  Use external, out-of-tree prebuilt mbedTLS library. For advanced
-	  users only.
-
-if MBEDTLS_LIBRARY
-
-config MBEDTLS_INSTALL_PATH
-	string "mbedTLS install path"
-	help
-	  This option holds the path where the mbedTLS libraries and headers are
-	  installed. Make sure this option is properly set when MBEDTLS_LIBRARY
-	  is enabled otherwise the build will fail.
-
-endif # MBEDTLS_LIBRARY
+	  The mbedTLS library must be configured and added out of tree.
 
 endchoice # MBEDTLS_IMPLEMENTATION
 
 rsource "Kconfig.mbedtls"
+rsource "Kconfig.tf-psa-crypto"
 rsource "Kconfig.ciphersuites"
 rsource "Kconfig.deprecated"
 
@@ -189,6 +184,7 @@ config MBEDTLS_SHELL
 
 config APP_LINK_WITH_MBEDTLS
 	bool "Link 'app' with MBEDTLS"
+	depends on MBEDTLS_BUILTIN
 	default y
 	help
 	  Add MBEDTLS header files to the 'app' include path. It may be

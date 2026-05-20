@@ -9,14 +9,20 @@
 #include <zephyr/pm/pm.h>
 #include <zephyr/irq.h>
 
+#include <esp_attr.h>
 #include <esp_cpu.h>
 #include <esp_sleep.h>
 #include <esp_timer_impl.h>
 #include <esp_private/esp_clk.h>
 #include <esp_private/systimer.h>
+#include <hal/gpio_hal.h>
+#include <driver/rtc_io.h>
+#include <soc/gpio_periph.h>
+
+#include <power.h>
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
+LOG_MODULE_REGISTER(soc_pm, CONFIG_SOC_LOG_LEVEL);
 
 #define MIN_RESIDENCY_SLEEP_US DT_PROP(DT_NODELABEL(light_sleep), min_residency_us)
 #define WAKEUP_MARGIN_US       200
@@ -25,6 +31,14 @@ static const struct device *const rtc_dev = DEVICE_DT_GET_OR_NULL(DT_NODELABEL(r
 
 static bool sleep_enabled;
 static uint64_t sleep_time_us;
+static uint64_t gpio_sleep_hold;
+#if defined(SOC_RTC_SLOW_MEM_SUPPORTED) || defined(SOC_RTC_FAST_MEM_SUPPORTED)
+static RTC_DATA_ATTR uint64_t gpio_was_held;
+#else
+static uint64_t gpio_was_held;
+#endif
+
+static gpio_hal_context_t gpio_hal = {.dev = GPIO_HAL_GET_HW(GPIO_PORT_0)};
 
 #if defined(CONFIG_XTENSA)
 static uint32_t intenable;
@@ -82,6 +96,82 @@ static bool rtc_wakeup_enable(enum pm_state state, bool enable)
 	return result;
 }
 
+void esp32_sleep_gpio_hold_config(uint8_t gpio_num, bool enable)
+{
+	if (gpio_num >= SOC_GPIO_PIN_COUNT) {
+		return;
+	}
+
+	bool is_rtc_io = rtc_gpio_is_valid_gpio(gpio_num);
+	bool is_digital_hold = !is_rtc_io && (GPIO_HOLD_MASK[gpio_num] != 0);
+
+	if (!is_rtc_io && !is_digital_hold) {
+		if (enable) {
+			LOG_WRN("GPIO %d does not support sleep-hold-en flag", gpio_num);
+		}
+		return;
+	}
+
+	if (enable) {
+		gpio_sleep_hold |= (1ULL << gpio_num);
+	} else {
+		gpio_sleep_hold &= ~(1ULL << gpio_num);
+	}
+}
+
+void esp32_sleep_gpio_prepare(void)
+{
+	for (int gpio = 0; gpio < SOC_GPIO_PIN_COUNT; gpio++) {
+
+		if (!(gpio_sleep_hold & (1ULL << gpio))) {
+			continue;
+		}
+
+		if (rtc_gpio_is_valid_gpio(gpio)) {
+#if SOC_RTCIO_HOLD_SUPPORTED
+			/* RTC IO: no is_held query available; always enable hold */
+			rtc_gpio_hold_en(gpio);
+#endif
+		} else {
+			/* Digital IO: preserve application-set holds */
+			if (gpio_hal_is_digital_io_hold(&gpio_hal, gpio)) {
+				gpio_was_held |= (1ULL << gpio);
+			} else {
+				gpio_hal_hold_en(&gpio_hal, gpio);
+			}
+		}
+	}
+}
+
+void esp32_sleep_gpio_restore(void)
+{
+	for (int gpio = 0; gpio < SOC_GPIO_PIN_COUNT; gpio++) {
+
+		if (!(gpio_sleep_hold & (1ULL << gpio))) {
+			continue;
+		}
+
+		/* After sleep, check which pins are currently in hold mode but were not
+		 * before sleep (pins originally held by the application). This allows us
+		 * to release hold only for the pins that were held by the sleep code.
+		 * Note: RTC IO pins with sleep-hold-en are always held and released during
+		 * sleep cycles. To keep a pin held independently across sleep, use a
+		 * digital IO pad instead.
+		 */
+		if (rtc_gpio_is_valid_gpio(gpio)) {
+#if SOC_RTCIO_HOLD_SUPPORTED
+			rtc_gpio_hold_dis(gpio);
+#endif
+		} else {
+			if (!(gpio_was_held & (1ULL << gpio))) {
+				gpio_hal_hold_dis(&gpio_hal, gpio);
+			}
+		}
+	}
+
+	gpio_was_held = 0;
+}
+
 /* PM hooks/callbacks */
 
 void pm_state_set(enum pm_state state, uint8_t substate_id)
@@ -99,6 +189,7 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 		sleep_enabled = rtc_wakeup_enable(state, true);
 
 		if (sleep_enabled) {
+			esp32_sleep_gpio_prepare();
 			esp_light_sleep_start();
 		}
 		break;
@@ -110,6 +201,7 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 #else
 		esp_sleep_pd_config(ESP_PD_DOMAIN_XTAL, ESP_PD_OPTION_ON);
 #endif
+		esp32_sleep_gpio_prepare();
 		esp_deep_sleep_start();
 		break;
 
@@ -126,6 +218,7 @@ void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 	switch (state) {
 	case PM_STATE_STANDBY:
 		if (sleep_enabled) {
+			esp32_sleep_gpio_restore();
 			rtc_wakeup_enable(state, false);
 		}
 

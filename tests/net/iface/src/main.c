@@ -228,12 +228,14 @@ static int eth_fake_send(const struct device *dev,
 	return 0;
 }
 
-static enum ethernet_hw_caps eth_fake_get_capabilities(const struct device *dev)
+static enum ethernet_hw_caps eth_fake_get_capabilities(const struct device *dev __unused,
+						       struct net_if *iface __unused)
 {
 	return ETHERNET_PROMISC_MODE;
 }
 
 static int eth_fake_set_config(const struct device *dev,
+			       struct net_if *iface __unused,
 			       enum ethernet_config_type type,
 			       const struct ethernet_config *config)
 {
@@ -385,9 +387,9 @@ static void *iface_setup(void)
 	net_if_dormant_on(iface1);
 
 	/* Operational state should be "oper down" */
-	zassert_equal(iface1->if_dev->oper_state, NET_IF_OPER_DOWN,
+	zassert_equal(net_if_oper_state(iface1), NET_IF_OPER_DOWN,
 		      "Invalid operational state (%d)",
-		      iface1->if_dev->oper_state);
+		      net_if_oper_state(iface1));
 
 	/* Mark the device ready and take the interface up */
 	dev->state->init_res = 0;
@@ -401,14 +403,14 @@ static void *iface_setup(void)
 	ret = net_if_up(iface1);
 	zassert_equal(ret, 0, "Interface 1 is not up (%d)", ret);
 
-	zassert_equal(iface1->if_dev->oper_state, NET_IF_OPER_DORMANT,
+	zassert_equal(net_if_oper_state(iface1), NET_IF_OPER_DORMANT,
 		      "Invalid operational state (%d)",
-		      iface1->if_dev->oper_state);
+		      net_if_oper_state(iface1));
 
 	net_if_dormant_off(iface1);
-	zassert_equal(iface1->if_dev->oper_state, NET_IF_OPER_UP,
+	zassert_equal(net_if_oper_state(iface1), NET_IF_OPER_UP,
 		      "Invalid operational state (%d)",
-		      iface1->if_dev->oper_state);
+		      net_if_oper_state(iface1));
 
 	ifaddr = net_if_ipv6_addr_add(iface1, &my_addr1,
 				      NET_ADDR_MANUAL, 0);

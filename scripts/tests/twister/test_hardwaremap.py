@@ -27,7 +27,7 @@ def mocked_hm():
         DUT(platform='p8', id=8, serial='s8', product='pr8', connected=False)
     ]
 
-    hm = HardwareMap(env=mock.Mock())
+    hm = HardwareMap(options=mock.Mock())
     hm.duts = duts
 
     return hm
@@ -242,7 +242,7 @@ TESTDATA_3 = [
     ids=['pty', 'not pty']
 )
 def test_hardwaremap_add_device(is_pty):
-    hm = HardwareMap(env=mock.Mock())
+    hm = HardwareMap(options=mock.Mock())
 
     serial = 'dummy'
     platform = 'p0'
@@ -294,7 +294,7 @@ def test_hardwaremap_load():
             return mock.mock_open(read_data=map_file)(*args, **kwargs)
         return builtin_open(*args, **kwargs)
 
-    hm = HardwareMap(env=mock.Mock())
+    hm = HardwareMap(options=mock.Mock())
     hm.options.device_flash_timeout = 30
     hm.options.device_flash_with_test = False
 

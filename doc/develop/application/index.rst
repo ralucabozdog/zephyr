@@ -1095,7 +1095,7 @@ again.
 
 .. note::
 
-   If the (Linux only) :ref:`Zephyr SDK <toolchain_zephyr_sdk>` is installed, the ``run``
+   If the :ref:`Zephyr SDK <toolchain_zephyr_sdk>` is installed, the ``run``
    target will use the SDK's QEMU binary by default. To use another version of
    QEMU, :ref:`set the environment variable <env_vars>` ``QEMU_BIN_PATH``
    to the path of the QEMU binary you want to use instead.
@@ -1161,6 +1161,7 @@ will be needed when submitting to Zephyr.
 The contents of ``my_custom_board`` should follow the same guidelines for any
 Zephyr board, and provide the following files::
 
+    board.yml
     my_custom_board_defconfig
     my_custom_board.dts
     my_custom_board.yaml

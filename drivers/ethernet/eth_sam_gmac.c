@@ -1393,7 +1393,7 @@ static int eth_tx(const struct device *dev, struct net_pkt *pkt)
 	pkt_prio = net_pkt_priority(pkt);
 
 #if defined(CONFIG_ETH_SAM_GMAC_FORCE_QUEUE)
-	/* Route eveything to the forced queue */
+	/* Route everything to the forced queue */
 	queue = &dev_data->queue_list[CONFIG_ETH_SAM_GMAC_FORCED_QUEUE];
 #elif GMAC_ACTIVE_QUEUE_NUM == CONFIG_NET_TC_TX_COUNT
 	/* Prefer to chose queue based on its traffic class */
@@ -1721,7 +1721,8 @@ static void phy_link_state_changed(const struct device *pdev,
 	}
 }
 
-static const struct device *eth_sam_gmac_get_phy(const struct device *dev)
+static const struct device *eth_sam_gmac_get_phy(const struct device *dev,
+						 struct net_if *iface __unused)
 {
 	const struct eth_sam_dev_cfg *const cfg = dev->config;
 
@@ -1841,10 +1842,9 @@ static void eth_iface_init(struct net_if *iface)
 	}
 }
 
-static enum ethernet_hw_caps eth_sam_gmac_get_capabilities(const struct device *dev)
+static enum ethernet_hw_caps eth_sam_gmac_get_capabilities(const struct device *dev __unused,
+							   struct net_if *iface __unused)
 {
-	ARG_UNUSED(dev);
-
 	return ETHERNET_LINK_10BASE |
 #if defined(CONFIG_NET_VLAN)
 		ETHERNET_HW_VLAN |
@@ -1903,6 +1903,7 @@ static int eth_sam_gmac_set_qav_param(const struct device *dev,
 #endif
 
 static int eth_sam_gmac_set_config(const struct device *dev,
+				   struct net_if *iface __unused,
 				   enum ethernet_config_type type,
 				   const struct ethernet_config *config)
 {
@@ -1931,10 +1932,6 @@ static int eth_sam_gmac_set_config(const struct device *dev,
 			dev_data->mac_addr[2], dev_data->mac_addr[3],
 			dev_data->mac_addr[4], dev_data->mac_addr[5]);
 
-		/* Register Ethernet MAC Address with the upper layer */
-		net_if_set_link_addr(dev_data->iface, dev_data->mac_addr,
-				     sizeof(dev_data->mac_addr),
-				     NET_LINK_ETHERNET);
 		break;
 	}
 	default:
@@ -1996,6 +1993,7 @@ static int eth_sam_gmac_get_qav_param(const struct device *dev,
 #endif
 
 static int eth_sam_gmac_get_config(const struct device *dev,
+				   struct net_if *iface __unused,
 				   enum ethernet_config_type type,
 				   struct ethernet_config *config)
 {
@@ -2015,7 +2013,8 @@ static int eth_sam_gmac_get_config(const struct device *dev,
 }
 
 #if defined(CONFIG_PTP_CLOCK_SAM_GMAC)
-static const struct device *eth_sam_gmac_get_ptp_clock(const struct device *dev)
+static const struct device *eth_sam_gmac_get_ptp_clock(const struct device *dev,
+						      struct net_if *iface __unused)
 {
 	const struct eth_sam_dev_cfg *const cfg = dev->config;
 

@@ -101,6 +101,26 @@ uSDHC2 for testing:
    :goals: build
    :gen-args: -DEXTRA_DTC_OVERLAY_FILE=usdhc2.overlay
 
+User Button
+-----------------------
+
+The user buttons K2 is connected to onboard GPIO expander PCAL6524, use the following command
+to test user buttons:
+
+.. zephyr-app-commands::
+   :zephyr-app: samples/basic/button
+   :host-os: unix
+   :board: frdm_imx91/mimx9131
+   :goals: build
+
+Run the app, press and release K2 button, then the following log could be found on Zephyr console:
+.. code-block:: console
+
+    *** Booting Zephyr OS build v4.3.0-6943-gc384779e39ac ***
+    Press the button
+    Button 11 pressed at 3058829772
+    Button 11 released at 3064215344
+
 Programming and Debugging
 *************************
 
@@ -162,7 +182,7 @@ Option 2. Boot Zephyr by Using JLink Runner
 Hardware Setup
 --------------
 
-The default runner for the board is JLink runner, there is one SWD connnector P14 on
+The default runner for the board is JLink runner, there is one SWD connector P14 on
 the FRDM-IMX91 board, connect P14 to J-Link debugger with Pin1 of P14 connect to SWDCLK,
 Pin2 of P14 connect to SWDIO, and Pin3 of P14 connect to GND, the VCC of J-Link debugger
 could connect to P1 of P12 connector.

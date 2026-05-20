@@ -210,64 +210,6 @@ static inline uint32_t ifx_uart_mem_width(uint32_t data_width)
 #endif
 }
 
-#if defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
-#define IFX_CAT1_INSTANCE_GROUP(instance, group) (((instance) << 4) | (group))
-#endif
-
-#if !defined(CONFIG_SOC_FAMILY_INFINEON_PSOC4)
-static uint8_t ifx_cat1_get_hfclk_for_peri_group(uint8_t peri_group)
-{
-#if defined(CONFIG_SOC_SERIES_PSE84)
-	switch (peri_group) {
-	case IFX_CAT1_INSTANCE_GROUP(0, 0):
-	case IFX_CAT1_INSTANCE_GROUP(1, 4):
-		return 0;
-	case IFX_CAT1_INSTANCE_GROUP(0, 7):
-	case IFX_CAT1_INSTANCE_GROUP(1, 0):
-		return 1;
-	case IFX_CAT1_INSTANCE_GROUP(0, 3):
-	case IFX_CAT1_INSTANCE_GROUP(1, 2):
-		return 5;
-	case IFX_CAT1_INSTANCE_GROUP(0, 4):
-	case IFX_CAT1_INSTANCE_GROUP(1, 3):
-		return 6;
-	case IFX_CAT1_INSTANCE_GROUP(1, 1):
-		return 7;
-	case IFX_CAT1_INSTANCE_GROUP(0, 2):
-		return 9;
-	case IFX_CAT1_INSTANCE_GROUP(0, 1):
-	case IFX_CAT1_INSTANCE_GROUP(0, 5):
-		return 10;
-	case IFX_CAT1_INSTANCE_GROUP(0, 8):
-		return 11;
-	case IFX_CAT1_INSTANCE_GROUP(0, 6):
-	case IFX_CAT1_INSTANCE_GROUP(0, 9):
-		return 13;
-	default:
-		break;
-	}
-#elif defined(CONFIG_SOC_SERIES_PSC3)
-	switch (peri_group) {
-	case 0:
-	case 2:
-		return 0;
-	case 1:
-	case 3:
-		return 1;
-	case 4:
-		return 2;
-	case 5:
-		return 3;
-	case 6:
-		return 4;
-	default:
-		break;
-	}
-#endif
-	return -EINVAL;
-}
-#endif
-
 cy_rslt_t ifx_cat1_uart_set_baud(const struct device *dev, uint32_t baudrate)
 {
 	cy_rslt_t status;
@@ -290,7 +232,7 @@ cy_rslt_t ifx_cat1_uart_set_baud(const struct device *dev, uint32_t baudrate)
 	peri_frequency = Cy_SysClk_ClkPeriGetFrequency();
 #elif defined(COMPONENT_CAT1B) || defined(COMPONENT_CAT1C) ||                                      \
 	defined(CONFIG_SOC_FAMILY_INFINEON_EDGE)
-	uint8_t hfclk = ifx_cat1_get_hfclk_for_peri_group(data->clock_peri_group);
+	uint8_t hfclk = ifx_cat1_utils_peri_pclk_get_hfclk(data->clock_peri_group);
 
 	peri_frequency = Cy_SysClk_ClkHfGetFrequency(hfclk);
 #else
@@ -618,24 +560,6 @@ static int ifx_cat1_uart_irq_is_pending(const struct device *dev)
 	uint32_t intcause = Cy_SCB_GetInterruptCause(config->reg_addr);
 
 	return (int)(intcause & (CY_SCB_TX_INTR | CY_SCB_RX_INTR));
-}
-
-/* Start processing interrupts in ISR.
- * This function should be called the first thing in the ISR. Calling
- * uart_irq_rx_ready(), uart_irq_tx_ready(), uart_irq_tx_complete()
- * allowed only after this.
- */
-static int ifx_cat1_uart_irq_update(const struct device *dev)
-{
-	const struct ifx_cat1_uart_config *const config = dev->config;
-	uint32_t rx_intr_pending = ((ifx_cat1_uart_irq_is_pending(dev) & CY_SCB_RX_INTR));
-	uint32_t num_in_rx_fifo = Cy_SCB_UART_GetNumInRxFifo(config->reg_addr);
-
-	if (rx_intr_pending != 0u && num_in_rx_fifo == 0u) {
-		return 0;
-	}
-
-	return 1;
 }
 
 static void ifx_cat1_uart_irq_callback_set(const struct device *dev,
@@ -1185,6 +1109,25 @@ unlock:
 
 #endif /*CONFIG_UART_ASYNC_API */
 
+#if defined(CONFIG_UART_ASYNC_API) && defined(CONFIG_UART_WIDE_DATA)
+static int ifx_cat1_uart_async_tx_u16(const struct device *dev, const uint16_t *tx_data,
+				      size_t buf_size, int32_t timeout)
+{
+	return ifx_cat1_uart_async_tx(dev, (const uint8_t *)tx_data, buf_size * 2, timeout);
+}
+
+static int ifx_cat1_uart_async_rx_enable_u16(const struct device *dev, uint16_t *buf, size_t len,
+					     int32_t timeout)
+{
+	return ifx_cat1_uart_async_rx_enable(dev, (uint8_t *)buf, len * 2, timeout);
+}
+
+static int ifx_cat1_uart_async_rx_buf_rsp_u16(const struct device *dev, uint16_t *buf, size_t len)
+{
+	return ifx_cat1_uart_async_rx_buf_rsp(dev, (uint8_t *)buf, len * 2);
+}
+#endif /* CONFIG_UART_ASYNC_API && CONFIG_UART_WIDE_DATA */
+
 CySCB_Type *const _IFX_CAT1_SCB_BASE_ADDRESSES[_IFX_CAT1_SCB_ARRAY_SIZE] = {
 #ifdef SCB0
 	SCB0,
@@ -1433,7 +1376,6 @@ static DEVICE_API(uart, ifx_cat1_uart_driver_api) = {
 	.irq_err_enable = ifx_cat1_uart_irq_err_enable,
 	.irq_err_disable = ifx_cat1_uart_irq_err_disable,
 	.irq_is_pending = ifx_cat1_uart_irq_is_pending,
-	.irq_update = ifx_cat1_uart_irq_update,
 	.irq_callback_set = ifx_cat1_uart_irq_callback_set,
 #endif /* CONFIG_UART_INTERRUPT_DRIVEN */
 
@@ -1444,6 +1386,11 @@ static DEVICE_API(uart, ifx_cat1_uart_driver_api) = {
 	.rx_enable = ifx_cat1_uart_async_rx_enable,
 	.rx_buf_rsp = ifx_cat1_uart_async_rx_buf_rsp,
 	.rx_disable = ifx_cat1_uart_async_rx_disable,
+#ifdef CONFIG_UART_WIDE_DATA
+	.tx_u16 = ifx_cat1_uart_async_tx_u16,
+	.rx_enable_u16 = ifx_cat1_uart_async_rx_enable_u16,
+	.rx_buf_rsp_u16 = ifx_cat1_uart_async_rx_buf_rsp_u16,
+#endif /* CONFIG_UART_WIDE_DATA */
 #endif /*CONFIG_UART_ASYNC_API*/
 
 };

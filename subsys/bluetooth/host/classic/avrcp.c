@@ -100,7 +100,7 @@ NET_BUF_POOL_DEFINE(avctp_browsing_rx_pool, BT_BUF_ACL_RX_COUNT,
 		    CONFIG_BT_CONN_TX_USER_DATA_SIZE, NULL);
 /*
  * This macros returns true if the CT/TG has been initialized, which
- * typically happens after the avrcp callack have been registered.
+ * typically happens after the avrcp callback have been registered.
  * Use these macros to determine whether the CT/TG role is supported.
  */
 #define IS_CT_ROLE_SUPPORTED() (avrcp_ct_cb != NULL)
@@ -2030,7 +2030,8 @@ static void avrcp_unit_info_cmd_handler(struct bt_avrcp *avrcp, uint8_t tid, str
 		goto err_rsp;
 	}
 
-	return avrcp_tg_cb->unit_info_req(get_avrcp_tg(avrcp), tid);
+	avrcp_tg_cb->unit_info_req(get_avrcp_tg(avrcp), tid);
+	return;
 
 err_rsp:
 	err = bt_avrcp_send_unit_info_err_rsp(avrcp, tid);
@@ -2447,7 +2448,8 @@ static void avrcp_subunit_info_cmd_handler(struct bt_avrcp *avrcp, uint8_t tid,
 		goto err_rsp;
 	}
 
-	return avrcp_tg_cb->subunit_info_req(get_avrcp_tg(avrcp), tid);
+	avrcp_tg_cb->subunit_info_req(get_avrcp_tg(avrcp), tid);
+	return;
 
 err_rsp:
 	err = bt_avrcp_send_subunit_info(avrcp, tid, BT_AVRCP_RSP_REJECTED);
@@ -2483,7 +2485,8 @@ static void avrcp_pass_through_cmd_handler(struct bt_avrcp *avrcp, uint8_t tid,
 		goto err_rsp;
 	}
 
-	return avrcp_tg_cb->passthrough_req(get_avrcp_tg(avrcp), tid, buf);
+	avrcp_tg_cb->passthrough_req(get_avrcp_tg(avrcp), tid, buf);
+	return;
 
 err_rsp:
 	rsp_buf = bt_avrcp_create_pdu(NULL);
@@ -2971,14 +2974,6 @@ void bt_avrcp_init(void)
 	if (initialized) {
 		return;
 	}
-
-#if defined(CONFIG_BT_AVRCP_TG_COVER_ART)
-	err = bt_avrcp_tg_cover_art_init(&bt_avrcp_tg_cover_art_psm);
-	if (err < 0) {
-		LOG_ERR("AVRCP Cover Art initialization failed (err %d)", err);
-		return;
-	}
-#endif /* CONFIG_BT_AVRCP_TG_COVER_ART */
 
 	LOG_DBG("AVRCP Initialized successfully.");
 
@@ -3865,6 +3860,14 @@ int bt_avrcp_tg_register_cb(const struct bt_avrcp_tg_cb *cb)
 	}
 
 	avrcp_tg_cb = cb;
+
+#if defined(CONFIG_BT_AVRCP_TG_COVER_ART)
+	err = bt_avrcp_tg_cover_art_init(&bt_avrcp_tg_cover_art_psm);
+	if (err < 0) {
+		LOG_ERR("AVRCP Cover Art initialization failed (err %d)", err);
+		goto failed;
+	}
+#endif /* CONFIG_BT_AVRCP_TG_COVER_ART */
 
 #if defined(CONFIG_BT_AVRCP_TARGET)
 	/* Register SDP record when TG callback is registered */

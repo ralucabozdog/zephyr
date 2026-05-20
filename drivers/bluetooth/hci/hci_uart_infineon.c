@@ -21,6 +21,7 @@
 #include <zephyr/drivers/bluetooth.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/uart.h>
+#include <zephyr/sys/byteorder.h>
 
 #define LOG_LEVEL CONFIG_BT_HCI_DRIVER_LOG_LEVEL
 #include <zephyr/logging/log.h>
@@ -76,7 +77,7 @@ extern const int brcm_patch_ram_length;
  * This function executes vendor-specific commands sequence to
  * initialize BT Controller before BT Host executes Reset sequence.
  * bt_h4_vnd_setup function must be implemented in vendor-specific HCI
- * extansion module if CONFIG_BT_HCI_SETUP is enabled.
+ * extension module if CONFIG_BT_HCI_SETUP is enabled.
  */
 int bt_h4_vnd_setup(const struct device *dev, const struct bt_hci_setup_params *params);
 
@@ -198,7 +199,7 @@ static int bt_firmware_download(const uint8_t *firmware_image, uint32_t size)
 	 */
 	while (remaining_length) {
 		size_t data_length = data[2]; /* data length from firmware image block */
-		uint16_t op_code = *(uint16_t *)data;
+		uint16_t op_code = sys_get_le16(data);
 
 		/* Allocate buffer for hci_write_ram/hci_launch_ram command. */
 		buf = bt_hci_cmd_alloc(K_FOREVER);

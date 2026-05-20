@@ -28,11 +28,10 @@ endif()
 set(QEMU_CPU_TYPE_${ARCH} "${qemu_riscv_cpu}")
 
 set(QEMU_FLAGS_${ARCH}
-  -nographic
   -machine virt
   -bios none
   -m 256
   -cpu ${qemu_riscv_cpu}
   )
 
-board_set_debugger_ifnset(qemu)
+include(${ZEPHYR_BASE}/boards/common/qemu.board.cmake)

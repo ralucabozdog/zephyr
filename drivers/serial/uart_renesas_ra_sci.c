@@ -349,16 +349,13 @@ static int uart_ra_sci_fifo_read(const struct device *dev, uint8_t *rx_data, con
 
 static void uart_ra_sci_irq_tx_enable(const struct device *dev)
 {
-	struct uart_ra_sci_data *data = dev->data;
 	const struct uart_ra_sci_config *cfg = dev->config;
 #if CONFIG_UART_RA_SCI_UART_FIFO_ENABLE
+	struct uart_ra_sci_data *data = dev->data;
 	if (data->sci.fifo_depth != 0) {
 		cfg->regs->SSR_FIFO &= (uint8_t)~SCI_UART_SSR_FIFO_TDFE_TEND;
-	} else
-#endif
-	{
-		cfg->regs->SSR = (uint8_t)~SCI_UART_SSR_TDRE_TEND;
 	}
+#endif
 
 	cfg->regs->SCR |= (R_SCI0_SCR_TIE_Msk | R_SCI0_SCR_TEIE_Msk);
 }
@@ -484,7 +481,7 @@ static int uart_ra_sci_irq_is_pending(const struct device *dev)
 	return ret;
 }
 
-static int uart_ra_sci_irq_update(const struct device *dev)
+static void uart_ra_sci_irq_update(const struct device *dev)
 {
 	struct uart_ra_sci_data *data = dev->data;
 	const struct uart_ra_sci_config *cfg = dev->config;
@@ -503,8 +500,6 @@ static int uart_ra_sci_irq_update(const struct device *dev)
 			data->ssr ^ (R_SCI0_SSR_ORER_Msk | R_SCI0_SSR_FER_Msk | R_SCI0_SSR_PER_Msk);
 		cfg->regs->SSR_FIFO &= ssr;
 	}
-
-	return 1;
 }
 
 static void uart_ra_sci_irq_callback_set(const struct device *dev, uart_irq_callback_user_data_t cb,

@@ -15,8 +15,17 @@ toolchain:
 ram: 8192
 flash: 16384
 supported:
+  - spi
   - adc
+  - dma
+  - flash
   - gpio
   - can
   - uart
+  - hwinfo
+  - mbox
+  - netif:eth
+  - i2c
+  - watchdog
+  - pwm
 vendor: nxp
