@@ -47,12 +47,18 @@ Supported Features
 Programming and Debugging
 *************************
 
+.. zephyr:board-supported-runners::
+
 Configuring a Console
 =====================
 
-Connect a USB cable from your PC to the USB-to-UART bridge connector, and use
-the serial terminal of your choice (minicom, putty, etc.) with the following
-settings:
+The on-board USB-to-UART bridge on the PRG USB connector is shared between the
+Secure Enclave UART (SE-UART) and the UART2 and LPUART user serial ports,
+selected by switch SW4. SW4 selects the SE-UART in its default position; move
+it to the UART2 position to reach the Zephyr console.
+
+Connect a USB cable from your PC to the PRG USB connector, and use the serial
+terminal of your choice (minicom, putty, etc.) with the following settings:
 
 - Speed: 115200
 - Data: 8 bits
@@ -66,22 +72,21 @@ The default UART console is:
 Flashing
 ========
 
-The Alif Balletto B1 Development Kit is programmed using the Alif Security
-Toolkit (SETOOLS). Refer to the `Balletto B1 DevKit Product Page`_ for detailed
-instructions on installing and using SETOOLS to program the board.
+The Alif Balletto B1 Development Kit is programmed with ``west flash`` through
+the Alif Security Toolkit (SETOOLS), using the :ref:`alif_flash runner
+<runner_alif_flash>`. Set up SETOOLS as described there, move SW4 to the SE-UART
+position and connect the PRG USB connector to your host computer. Pass the
+SE-UART device with ``--port`` if it differs from the SETOOLS configuration.
+Move SW4 back to the console position after flashing.
 
-Building an application for the RTSS-HE core:
+Building and flashing an application for the RTSS-HE core:
 
 .. zephyr-app-commands::
    :zephyr-app: samples/hello_world
    :board: balletto_b1_dk/ab1c1f4m51820ph0
-   :goals: build
+   :goals: build flash
 
-After building, use SETOOLS to flash the ``build/zephyr/zephyr.bin`` binary to
-the board.
-
-After flashing and resetting the board, you should see the following message
-on the serial console:
+On the serial terminal, you should see the following message:
 
 .. code-block:: console
 
@@ -90,8 +95,14 @@ on the serial console:
 Debugging
 =========
 
-The board supports debugging via the JTAG debug connector using standard debugging tools
-such as SEGGER J-Link.
+The board can be debugged with ``west debug`` through the on-board SEGGER J-Link
+on the PRG USB connector. Switch SW5 must be in the position that enables it.
+
+.. zephyr-app-commands::
+   :zephyr-app: samples/hello_world
+   :board: balletto_b1_dk/ab1c1f4m51820ph0
+   :maybe-skip-config:
+   :goals: debug
 
 References
 **********

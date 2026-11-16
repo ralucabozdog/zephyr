@@ -24,6 +24,7 @@ class AlifImageBinaryRunner(ZephyrBinaryRunner):
     cfg_op_file = Path('build/config/tmp-cpu-stubs.json')
     glbl_cfg_file = Path('utils/global-cfg.db')
     isp_cfg_file = Path('isp_config_data.cfg')
+    device_cfg_1c_file = 'app-device-config-1c.json'
     images_dir = Path('build/images')
 
     def __init__(
@@ -119,7 +120,12 @@ class AlifImageBinaryRunner(ZephyrBinaryRunner):
 
         self.logger.info("Binary address %s and size %s KB", hex(fls_addr), fls_size)
 
-        if self.build_conf.getboolean('CONFIG_SOC_FAMILY_ENSEMBLE_RTSS_HP'):
+        single_core = self.build_conf.getboolean('CONFIG_SOC_FAMILY_BALLETTO')
+
+        if single_core:
+            self.logger.info("..build for HighEfficency Core")
+            toc_entry = "HE_APP"
+        elif self.build_conf.getboolean('CONFIG_SOC_FAMILY_ENSEMBLE_RTSS_HP'):
             self.logger.info("..build for HighPerformance Core")
             toc_entry = "HP_APP"
         elif self.build_conf.getboolean('CONFIG_SOC_FAMILY_ENSEMBLE_RTSS_HE'):
@@ -136,7 +142,7 @@ class AlifImageBinaryRunner(ZephyrBinaryRunner):
             shutil.copy(self.bl32_bin, self.tools_dir / self.images_dir / 'bl32.bin')
 
         # Prepare json to create AToC.
-        self.prepare_json(toc_entry, fls_addr, fls_size, self.bl32_bin, self.bl32_base)
+        self.prepare_json(toc_entry, fls_addr, fls_size, self.bl32_bin, self.bl32_base, single_core)
 
         # Generate ToC. The SE tools resolve their files relative to the
         # working directory.
@@ -196,13 +202,20 @@ class AlifImageBinaryRunner(ZephyrBinaryRunner):
                 "re-run tools-config in the Alif SE tools directory"
             )
 
-    def prepare_json(self, toc_entry, fls_addr, fls_size, bl32_bin, bl32_base):
+    def prepare_json(self, toc_entry, fls_addr, fls_size, bl32_bin, bl32_base, single_core=False):
         """Prepare JSON for ToC generation."""
         cfg_ip_path = self.tools_dir / self.cfg_ip_file
         cfg_op_path = self.tools_dir / self.cfg_op_file
 
         json_data = json.loads(cfg_ip_path.read_text(encoding="utf-8"))
         cpu_node = json_data[toc_entry]
+
+        if single_core:
+            # Single-core parts have no stub targets for the other cores and
+            # use their own device configuration.
+            device_node = json_data["DEVICE"]
+            device_node["binary"] = self.device_cfg_1c_file
+            json_data = {"DEVICE": device_node, toc_entry: cpu_node}
 
         # change binary name
         cpu_node["binary"] = "zephyr.bin"

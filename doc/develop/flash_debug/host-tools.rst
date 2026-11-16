@@ -17,7 +17,7 @@ more information on these commands.
 Alif Security Toolkit (SETOOLS)
 *******************************
 
-The Alif Security Toolkit (SETOOLS) programs the MRAM of Alif Ensemble devices
+The Alif Security Toolkit (SETOOLS) programs the MRAM of Alif Ensemble and Balletto devices
 through the Secure Enclave UART (SE-UART). The ``alif_flash`` runner wraps SETOOLS: it generates
 an Application Table of Contents (ATOC) package for the core the application was built for with
 ``app-gen-toc``, then writes it to MRAM with ``app-write-mram``. The runner supports
