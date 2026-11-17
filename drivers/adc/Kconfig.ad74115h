@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: Copyright The Zephyr Project Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+config ADC_AD74115H
+	bool "AD74115H ADC driver"
+	default y
+	depends on DT_HAS_ADI_AD74115H_ENABLED
+	select SPI
+	select CRC
+	help
+	  Enable the ADC driver for the Analog Devices AD74115H software
+	  configurable input/output. The channel is configured for voltage
+	  input and measured with the primary ADC conversion.
