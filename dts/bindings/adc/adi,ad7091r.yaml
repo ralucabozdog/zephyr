@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: Copyright The Zephyr Project Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Analog Devices AD7091R 12-bit, 1 MSPS successive approximation ADC
+
+  ADC channel 0 measures 0 V to VREF with 12-bit resolution. With the
+  internal 2.5 V reference, its channel node uses
+  zephyr,reference = "ADC_REF_INTERNAL", zephyr,vref-mv = <2500> and
+  zephyr,resolution = <12>. With an external reference on REFIN/REFOUT,
+  use zephyr,reference = "ADC_REF_EXTERNAL0" and set zephyr,vref-mv to the
+  reference voltage.
+
+  The device shifts data out on the falling SCLK edge and SCLK must idle
+  low, so leave the spi-cpol and spi-cpha properties unset (SPI mode 0).
+
+compatible: "adi,ad7091r"
+
+include: [adc-controller.yaml, spi-device.yaml]
+
+on-bus: spi
+
+properties:
+  "#io-channel-cells":
+    const: 1
+
+  convst-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      GPIO connected to the CONVST pin. A conversion starts on the falling
+      edge of CONVST, so flag the GPIO as GPIO_ACTIVE_LOW.
+
+io-channel-cells:
+  - input

@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: Copyright The Zephyr Project Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+config ADC_AD7091R
+	bool "AD7091R ADC driver"
+	default y
+	depends on DT_HAS_ADI_AD7091R_ENABLED
+	select SPI
+	select GPIO
+	help
+	  Enable the ADC driver for the Analog Devices AD7091R 12-bit,
+	  1 MSPS successive approximation ADC.
