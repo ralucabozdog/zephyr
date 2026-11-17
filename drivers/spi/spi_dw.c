@@ -62,8 +62,13 @@ static void completed(const struct device *dev, int error)
 	}
 
 out:
-	/* need to give time for FIFOs to drain before issuing more commands */
-	while (test_bit_sr_busy(dev)) {
+	/*
+	 * Give the FIFOs time to drain before issuing more commands. BUSY is
+	 * not yet set right after the last word is written to the TX FIFO, so
+	 * also wait for the TX FIFO to empty in controller mode; disabling the
+	 * SSI earlier flushes the frame.
+	 */
+	while ((!spi_dw_is_peripheral(spi) && !test_bit_sr_tfe(dev)) || test_bit_sr_busy(dev)) {
 	}
 
 	/* Disabling interrupts */

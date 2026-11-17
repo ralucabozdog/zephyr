@@ -254,6 +254,7 @@ __maybe_unused static int reg_test_bit(uint8_t bit, mm_reg_t addr, uint32_t off)
 /* SR bits and values */
 #define DW_SPI_SR_BUSY_BIT		(0)
 #define DW_SPI_SR_TFNF_BIT		(1)
+#define DW_SPI_SR_TFE_BIT		(2)
 #define DW_SPI_SR_RFNE_BIT		(3)
 
 /* IMR bits (ISR valid as well) */
@@ -337,6 +338,7 @@ DEFINE_SET_BIT_OP(ssienr, DW_SPI_REG_SSIENR, DW_SPI_SSIENR_SSIEN_BIT)
 DEFINE_CLEAR_BIT_OP(ssienr, DW_SPI_REG_SSIENR, DW_SPI_SSIENR_SSIEN_BIT)
 DEFINE_TEST_BIT_OP(ssienr, DW_SPI_REG_SSIENR, DW_SPI_SSIENR_SSIEN_BIT)
 DEFINE_TEST_BIT_OP(sr_busy, DW_SPI_REG_SR, DW_SPI_SR_BUSY_BIT)
+DEFINE_TEST_BIT_OP(sr_tfe, DW_SPI_REG_SR, DW_SPI_SR_TFE_BIT)
 
 #ifdef __cplusplus
 }
