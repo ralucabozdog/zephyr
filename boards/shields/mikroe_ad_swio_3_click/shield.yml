@@ -1,0 +1,6 @@
+shield:
+  name: mikroe_ad_swio_3_click
+  full_name: AD-SWIO 3 Click
+  vendor: mikroe
+  supported_features:
+    - adc

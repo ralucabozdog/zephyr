@@ -1,0 +1,33 @@
+/*
+ * SPDX-FileCopyrightText: Copyright The Zephyr Project Contributors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <zephyr/dt-bindings/adc/adc.h>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/gpio/mikro-bus.h>
+
+&mikrobus_spi {
+	status = "okay";
+
+	ad74115h_mikroe_ad_swio_3_click: ad74115h@0 {
+		compatible = "adi,ad74115h";
+		reg = <0x0>;
+		/* The SPI signals cross the ADP1034 digital isolators */
+		spi-max-frequency = <100000>;
+		spi-cpol;
+		reset-gpios = <&mikrobus_header MIKROBUS_RST GPIO_ACTIVE_LOW>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		#io-channel-cells = <1>;
+
+		channel@0 {
+			reg = <0>;
+			zephyr,gain = "ADC_GAIN_1";
+			zephyr,reference = "ADC_REF_INTERNAL";
+			zephyr,vref-mv = <12000>;
+			zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+			zephyr,resolution = <16>;
+		};
+	};
+};
