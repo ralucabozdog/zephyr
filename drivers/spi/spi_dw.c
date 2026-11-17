@@ -587,6 +587,15 @@ void spi_dw_isr(const struct device *dev)
 	LOG_DBG("SPI %p int_status 0x%x - (tx: %d, rx: %d)", dev, int_status,
 		read_txflr(dev), read_rxflr(dev));
 
+	/*
+	 * An interrupt that latched again after the last transfer masked them
+	 * has no status. Completing on it would signal a transfer that is not
+	 * running, and the next transfer would return before its data arrives.
+	 */
+	if (int_status == 0U) {
+		return;
+	}
+
 	if (int_status & DW_SPI_ISR_ERRORS_MASK) {
 		error = -EIO;
 		goto out;
