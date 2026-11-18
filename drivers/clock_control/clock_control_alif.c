@@ -80,6 +80,8 @@ struct alif_clock_control_config {
 #define ALIF_CLOCK_50M_FREQ          MHZ(50)
 /* 100M_CLK, a fixed division of the system PLL output */
 #define ALIF_CLOCK_100M_FREQ         MHZ(100)
+/* 20M_CLK, a fixed division of the system PLL output */
+#define ALIF_CLOCK_20M_FREQ          MHZ(20)
 
 /*
  * Clock Configuration Field Extraction Macros
@@ -236,6 +238,8 @@ static uint32_t alif_get_clock_freq(uint32_t clock_id)
 		return ALIF_CLOCK_50M_FREQ;
 	case ALIF_PARENT_CLK_100M:
 		return ALIF_CLOCK_100M_FREQ;
+	case ALIF_PARENT_CLK_20M:
+		return ALIF_CLOCK_20M_FREQ;
 	default:
 		__ASSERT(false, "Invalid parent clock: %u", parent_clk);
 		return 0;

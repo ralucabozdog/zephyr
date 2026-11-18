@@ -116,6 +116,8 @@
 #define ALIF_PARENT_CLK_50M         0x5U
 /** 100 MHz clock (100M_CLK), the system PLL output divided by eight */
 #define ALIF_PARENT_CLK_100M        0x6U
+/** 20 MHz clock (20M_CLK), a fixed division of the system PLL output */
+#define ALIF_PARENT_CLK_20M         0x7U
 
 /** @} */
 
