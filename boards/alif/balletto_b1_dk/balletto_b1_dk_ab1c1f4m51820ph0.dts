@@ -19,6 +19,7 @@
 		zephyr,sram = &dtcm;
 		zephyr,console = &uart2;
 		zephyr,shell-uart = &uart2;
+		zephyr,usb-buf-region = &dtcm_ns;
 	};
 
 	aliases {
@@ -153,6 +154,20 @@
 	pinctrl-0 = <&spi1_default>;
 	pinctrl-names = "default";
 	cs-gpios = <&gpio8 7 GPIO_ACTIVE_LOW>;
+	status = "okay";
+};
+
+/* The USB controller reaches only the non-secure window of the DTCM */
+&dtcm {
+	reg = <0x20000000 DT_SIZE_K(1408)>;
+};
+
+&dtcm_ns {
+	status = "okay";
+};
+
+zephyr_udc0: &usb {
+	memory-regions = <&dtcm_ns>;
 	status = "okay";
 };
 
