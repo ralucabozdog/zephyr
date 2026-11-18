@@ -103,6 +103,10 @@
 	};
 
 	soc: soc {
+		/* Bus masters reach the ITCM and DTCM through their global aliases */
+		dma-ranges = <0x58000000 0x00000000 DT_SIZE_K(512)>,
+			     <0x58800000 0x20000000 DT_SIZE_K(1536)>;
+
 		peripheral_region: memory@1a000000 {
 			compatible = "zephyr,memory-region";
 			reg = <0x1a000000 DT_SIZE_M(8)>;
@@ -208,6 +212,18 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			interrupts = <139 0>;
+			status = "disabled";
+		};
+
+		usb: usb@48200000 {
+			compatible = "snps,dwc3";
+			reg = <0x48200000 0xca04>;
+			clocks = <&clockctrl ALIF_USB_CLK>, <&clockctrl ALIF_SDC_CLK>;
+			interrupts = <101 0>;
+			maximum-speed = "high-speed";
+			num-in-eps = <8>;
+			num-out-eps = <5>;
+			utmi-width = <16>;
 			status = "disabled";
 		};
 
@@ -465,6 +481,21 @@
 		compatible = "zephyr,memory-region", "arm,dtcm";
 		reg = <0x20000000 DT_SIZE_K(1536)>;
 		zephyr,memory-region = "DTCM";
+	};
+
+	/*
+	 * Bus masters other than the cores issue non-secure transactions,
+	 * which reach the DTCM only where the SoC marks it non-secure. When
+	 * enabled, the window is taken from the top of the DTCM, which must
+	 * be shrunk by its size. The window covers whole 128 KiB DTCM gate
+	 * unit blocks.
+	 */
+	dtcm_ns: memory@20160000 {
+		compatible = "zephyr,memory-region";
+		reg = <0x20160000 DT_SIZE_K(128)>;
+		zephyr,memory-region = "DTCM_NS";
+		#memory-region-cells = <0>;
+		status = "disabled";
 	};
 };
 
