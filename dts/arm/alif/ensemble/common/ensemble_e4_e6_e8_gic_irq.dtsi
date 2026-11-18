@@ -133,3 +133,8 @@
 	interrupt-parent = <&gic>;
 	interrupts = <GIC_SPI 137 IRQ_TYPE_LEVEL IRQ_DEFAULT_PRIORITY>;
 };
+
+&usb {
+	interrupt-parent = <&gic>;
+	interrupts = <GIC_SPI 90 IRQ_TYPE_LEVEL IRQ_DEFAULT_PRIORITY>;
+};

@@ -63,6 +63,17 @@
 		status = "disabled";
 	};
 
+	usb: usb@48200000 {
+		compatible = "snps,dwc3";
+		reg = <0x48200000 0xca04>;
+		clocks = <&clockctrl ALIF_USB_CLK>, <&clockctrl ALIF_USB_PHY_20M_CLK>;
+		maximum-speed = "high-speed";
+		num-in-eps = <8>;
+		num-out-eps = <5>;
+		utmi-width = <16>;
+		status = "disabled";
+	};
+
 	gpio9: gpio@49009000 {
 		compatible = "snps,designware-gpio";
 		reg = <0x49009000 0x1000>;

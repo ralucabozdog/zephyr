@@ -133,3 +133,8 @@
 	interrupt-parent = <&nvic>;
 	interrupts = <148 0>;
 };
+
+&usb {
+	interrupt-parent = <&nvic>;
+	interrupts = <101 0>;
+};

@@ -38,6 +38,27 @@
 		reg = <0x20000000 DT_SIZE_K(256)>;
 		zephyr,memory-region = "DTCM";
 	};
+
+	/*
+	 * Bus masters other than the cores issue non-secure transactions,
+	 * which reach the DTCM only where the SoC marks it non-secure. When
+	 * enabled, the window is taken from the top of the DTCM, which must
+	 * be shrunk by its size. The window covers whole 16 KiB DTCM gate
+	 * unit blocks.
+	 */
+	dtcm_ns: memory@20038000 {
+		compatible = "zephyr,memory-region";
+		reg = <0x20038000 DT_SIZE_K(32)>;
+		zephyr,memory-region = "DTCM_NS";
+		#memory-region-cells = <0>;
+		status = "disabled";
+	};
+};
+
+&soc {
+	/* Bus masters reach the ITCM and DTCM of this core through their global aliases */
+	dma-ranges = <0x58000000 0x00000000 DT_SIZE_K(256)>,
+		     <0x58800000 0x20000000 DT_SIZE_K(256)>;
 };
 
 &nvic {
