@@ -7,6 +7,15 @@ zephyr_include_directories(../common)
 # Controller-mode setup for the DesignWare SSI instances
 zephyr_sources_ifdef(CONFIG_SPI_DW ../common/ssi.c)
 
+# Non-secure DTCM window for bus masters, when enabled in devicetree
+dt_nodelabel(dtcm_ns_node NODELABEL "dtcm_ns")
+if(DEFINED dtcm_ns_node)
+  dt_node_has_status(dtcm_ns_okay PATH "${dtcm_ns_node}" STATUS okay)
+  if(dtcm_ns_okay)
+    zephyr_sources(../common/dtcm_ns.c)
+  endif()
+endif()
+
 # Cluster-specific code for Cortex-M55 RTSS cores
 if(CONFIG_SOC_FAMILY_ENSEMBLE_RTSS)
   add_subdirectory(rtss)
