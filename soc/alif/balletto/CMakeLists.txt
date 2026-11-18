@@ -8,7 +8,7 @@ zephyr_include_directories(../common)
 zephyr_sources_ifdef(CONFIG_SPI_DW ../common/ssi.c)
 
 # Secure Enclave services client
-if(CONFIG_UDC_DWC3)
+if(CONFIG_UDC_DWC3 OR CONFIG_HWINFO_ALIF)
   zephyr_sources(../common/se.c)
 endif()
 
