@@ -21,6 +21,9 @@
  * @{
  */
 
+/** Peripheral clock enable register offset in CLKCTL_PER_MST */
+#define ALIF_PERIPH_CLK_ENA_REG		0x0CU
+
 /** UART control register offset in CLKCTL_PER_SLV */
 #define ALIF_UART_CTRL_REG		0x08U
 
@@ -106,6 +109,24 @@
 /** LPTIMER1 clock sourced from 128K_CLK */
 #define ALIF_LPTIMER1_128K_CLK      \
 	ALIF_CLK_CFG(VBAT, TIMER_CLKSEL, 0U, 0U, 1U, 2U, 4U, ALIF_PARENT_CLK_128K)
+
+/** @} */
+
+/**
+ * @name USB and SDMMC clocks
+ *
+ * Both controllers are bus masters clocked from system ACLK and gated in
+ * PERIPH_CLK_ENA. The USB controller needs the SDMMC gate enabled as well.
+ *
+ * @{
+ */
+
+/** SDMMC clock gate */
+#define ALIF_SDC_CLK                \
+	ALIF_CLK_CFG(CLKCTL_PER_MST, PERIPH_CLK_ENA, 16U, 1U, 0U, 0U, 0U, ALIF_PARENT_CLK_SYST_ACLK)
+/** USB clock gate */
+#define ALIF_USB_CLK                \
+	ALIF_CLK_CFG(CLKCTL_PER_MST, PERIPH_CLK_ENA, 20U, 1U, 0U, 0U, 0U, ALIF_PARENT_CLK_SYST_ACLK)
 
 /** @} */
 

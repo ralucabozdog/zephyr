@@ -183,4 +183,24 @@
 
 /** @} */
 
+/**
+ * @name USB clocks
+ *
+ * The USB controller is a bus master clocked from system ACLK and gated in
+ * PERIPH_CLK_ENA. Its PHY is clocked from 20M_CLK, whose gate in the CGU
+ * clock enable register also gates 20M_CLK for the other peripherals it
+ * feeds.
+ *
+ * @{
+ */
+
+/** USB clock gate */
+#define ALIF_USB_CLK                \
+	ALIF_CLK_CFG(CLKCTL_PER_MST, PERIPH_CLK_ENA, 20U, 1U, 0U, 0U, 0U, ALIF_PARENT_CLK_SYST_ACLK)
+/** USB PHY clock sourced from 20M_CLK */
+#define ALIF_USB_PHY_20M_CLK        \
+	ALIF_CLK_CFG(CGU, CLK_ENA, 22U, 1U, 0U, 0U, 0U, ALIF_PARENT_CLK_20M)
+
+/** @} */
+
 #endif /* ZEPHYR_INCLUDE_DT_BINDINGS_CLOCK_ALIF_ENSEMBLE_CLOCKS_H_ */
