@@ -1,0 +1,50 @@
+# Copyright (c) 2025 Alif Semiconductor
+# Copyright (c) 2026 Analog Devices, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  DesignWare USB 3.0 (DWC_usb3) controller in USB 2.0 device mode
+
+  The controller reads and writes memory as a bus master. When it reaches
+  memory at other addresses than the CPU, for example tightly coupled memory
+  through a system alias, describe the translation with dma-ranges in the
+  parent bus node. When it can reach only part of the memory, reference that
+  part with memory-regions, where the driver places its event buffer and
+  transfer descriptors.
+
+compatible: "snps,dwc3"
+
+include: [usb-controller.yaml, memory-region.yaml]
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true
+
+  clocks:
+    required: true
+    description: |
+      Clocks to enable before accessing the controller. All of them must be
+      provided by the same clock controller.
+
+  num-in-eps:
+    type: int
+    required: true
+    description: |
+      Number of IN endpoints including the control endpoint.
+
+  num-out-eps:
+    type: int
+    required: true
+    description: |
+      Number of OUT endpoints including the control endpoint.
+
+  utmi-width:
+    type: int
+    default: 8
+    enum: [8, 16]
+    description: |
+      Data width in bits of the UTMI+ interface to the USB 2.0 PHY. The
+      default is the reset value of the controller.

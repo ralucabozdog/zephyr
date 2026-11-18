@@ -1,0 +1,28 @@
+# Copyright (c) 2025 Alif Semiconductor
+# Copyright (c) 2026 Analog Devices, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+config UDC_DWC3
+	bool "DWC3 USB device controller driver"
+	default y
+	depends on DT_HAS_SNPS_DWC3_ENABLED
+	select UDC_DRIVER_HAS_HIGH_SPEED_SUPPORT
+	help
+	  Driver for the DesignWare USB 3.0 (DWC_usb3) controller operating as a
+	  USB 2.0 device. Control, bulk and interrupt transfers are supported.
+
+if UDC_DWC3
+
+config UDC_DWC3_STACK_SIZE
+	int "UDC DWC3 driver internal thread stack size"
+	default 1024
+	help
+	  DWC3 driver internal thread stack size.
+
+config UDC_DWC3_THREAD_PRIORITY
+	int "UDC DWC3 driver thread priority"
+	default 8
+	help
+	  DWC3 driver thread priority.
+
+endif # UDC_DWC3
