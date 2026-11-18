@@ -12,7 +12,9 @@
 #ifndef ZEPHYR_INCLUDE_USB_BUF_H
 #define ZEPHYR_INCLUDE_USB_BUF_H
 
+#include <zephyr/devicetree.h>
 #include <zephyr/kernel.h>
+#include <zephyr/linker/devicetree_regions.h>
 #include <zephyr/net_buf.h>
 
 /**
@@ -53,7 +55,13 @@
 #endif
 
 
-#if USB_BUF_FORCE_NOCACHE
+#if DT_HAS_CHOSEN(zephyr_usb_buf_region)
+/*
+ * The usb transfer buffer needs to be in the region the controller can reach
+ */
+#define USB_PRIV_BUFSECTION							\
+	Z_GENERIC_SECTION(LINKER_DT_NODE_REGION_NAME(DT_CHOSEN(zephyr_usb_buf_region)))
+#elif USB_BUF_FORCE_NOCACHE
 /*
  * The usb transfer buffer needs to be in __nocache section
  */
@@ -107,10 +115,15 @@
 		 },								\
 	}
 
+#if DT_HAS_CHOSEN(zephyr_usb_buf_region)
+#define USB_BUF_K_HEAP_DEFINE(name, size)					\
+	USB_BUF_HEAP_DEFINE(name, size, USB_PRIV_BUFSECTION)
+#else
 #define USB_BUF_K_HEAP_DEFINE(name, size)					\
 	COND_CODE_1(USB_BUF_FORCE_NOCACHE,					\
 		    (USB_BUF_HEAP_DEFINE(name, size, __nocache)),		\
 		    (USB_BUF_HEAP_DEFINE(name, size, __noinit)))
+#endif
 
 extern const struct net_buf_data_cb net_buf_dma_cb;
 /** @endcond */

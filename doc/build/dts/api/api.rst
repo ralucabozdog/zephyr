@@ -589,6 +589,10 @@ device.
      - UART used for :ref:`device_mgmt`
    * - zephyr,uart-pipe
      - Sets UART device used by serial pipe driver
+   * - zephyr,usb-buf-region
+     - Memory region, a ``zephyr,memory-region`` node, where the USB device and
+       host stacks place their transfer buffers, for controllers that cannot
+       reach all of the memory
    * - zephyr,videoenc
      - Video encoder device, typically an H264 or MJPEG video encoder.
 
