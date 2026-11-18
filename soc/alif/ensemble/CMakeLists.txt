@@ -7,6 +7,15 @@ zephyr_include_directories(../common)
 # Controller-mode setup for the DesignWare SSI instances
 zephyr_sources_ifdef(CONFIG_SPI_DW ../common/ssi.c)
 
+# Secure Enclave services client and USB PHY power, using the RTSS mailbox
+if(CONFIG_SOC_FAMILY_ENSEMBLE_RTSS)
+  if(CONFIG_UDC_DWC3)
+    zephyr_sources(../common/se.c)
+  endif()
+
+  zephyr_sources_ifdef(CONFIG_UDC_DWC3 ../common/usb.c)
+endif()
+
 # Non-secure DTCM window for bus masters, when enabled in devicetree
 dt_nodelabel(dtcm_ns_node NODELABEL "dtcm_ns")
 if(DEFINED dtcm_ns_node)
