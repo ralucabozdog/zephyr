@@ -22,6 +22,7 @@
 	ad5593@10 {
 		compatible = "adi,ad559x";
 		reg = <0x10>;
+		reset-gpios = <&mikrobus_header MIKROBUS_RST GPIO_ACTIVE_LOW>;
 
 		ad5593_adc_mikroe_adac_click: ad5593_adc {
 			compatible = "adi,ad559x-adc";

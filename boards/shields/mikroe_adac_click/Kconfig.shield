@@ -6,3 +6,4 @@ config SHIELD_MIKROE_ADAC_CLICK
 	def_bool $(shields_list_contains,mikroe_adac_click)
 	select MFD
 	select I2C
+	select GPIO
